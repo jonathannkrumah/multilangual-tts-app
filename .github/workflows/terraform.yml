@@ -31,7 +31,7 @@ jobs:
       - name: Terraform Init (local)
         run: terraform -chdir=infrastructure init -backend=false
 
-      # Apply only the backend resources
+      # Apply only the backend resources (S3 + DynamoDB)
       - name: Terraform Apply Backend
         run: terraform -chdir=infrastructure apply -auto-approve -target=aws_s3_bucket.tf_state -target=aws_dynamodb_table.tf_locks
 
@@ -52,7 +52,7 @@ jobs:
           role-to-assume: arn:aws:iam::164229328614:role/GitHubTerraformRole
           aws-region: us-east-1
 
-      # Initialize Terraform with real backend
+      # Initialize Terraform WITH real backend
       - name: Terraform Init (backend)
         run: terraform -chdir=infrastructure init -reconfigure
 
