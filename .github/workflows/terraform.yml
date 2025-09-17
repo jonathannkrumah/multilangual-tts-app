@@ -1,0 +1,122 @@
+name: Deploy TTS App
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  bootstrap:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Opentofu
+        uses: opentofu/setup-opentofu@000eeb8522f0572907c393e8151076c205fdba1b # v1.0.6
+        with:
+          tofu wrapper: false
+          
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Terraform Init (backend)
+        run: terraform -chdir=infrastructure init
+
+      - name: Terraform Apply (backend)
+        run: terraform -chdir=infrastructure apply -auto-approve
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [bootstrap]
+    if: always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # Lambda Deployment
+
+      - name: Package Lambda
+        run: |
+          chmod +x scripts/package_lambda.sh
+          ./scripts/package_lambda.sh
+
+      - name: Terraform Init (app)
+        run: terraform -chdir=infrastructure init
+
+      - name: Terraform Validate (app)
+        run: terraform -chdir=infrastructure validate
+
+      - name: Terraform Plan (app)
+        run: terraform -chdir=infrastructure plan -input=false -out=tfplan
+
+      - name: Terraform Apply (app)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform -chdir=infrastructure apply -input=false -auto-approve tfplan
+
+      # Frontend Deployment
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install frontend dependencies
+        run: npm install
+        working-directory: ./frontend/tts-frontend
+
+      - name: Set React environment variables
+        run: |
+          API_URL=$(terraform -chdir=$GITHUB_WORKSPACE/infrastructure/app output -raw tts_api_invoke_url)
+          echo "REACT_APP_TTS_API_URL=$API_URL" >> $GITHUB_ENV
+          echo "REACT_APP_TTS_API_URL=$API_URL" > .env
+        working-directory: ./frontend/tts-frontend
+
+      - name: Build React frontend
+        run: npm run build
+        working-directory: ./frontend/tts-frontend 
+
+      - name: Sync build to S3
+        run: |
+          aws s3 sync build/ s3://tts-app-frontend --delete
+        working-directory: ./frontend/tts-frontend
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+
+    
+      # Dynamic CloudFront Invalidation
+
+      - name: Get CloudFront Distribution ID
+        id: get_cf_id
+        run: |
+          CF_ID=$(terraform -chdir=infrastructure/app output -raw frontend_cloudfront_id || echo "")
+          echo "CF_ID=$CF_ID" >> $GITHUB_ENV
+          
+      - name: Invalidate CloudFront cache
+        if: ${{ env.CF_ID != '' }}
+        run: aws cloudfront create-invalidation --distribution-id $CF_ID --paths "/*"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
