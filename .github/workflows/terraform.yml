@@ -8,13 +8,12 @@ on:
 
 jobs:
   bootstrap:
-    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Install Opentofu
         uses: opentofu/setup-opentofu@000eeb8522f0572907c393e8151076c205fdba1b # v1.0.6
         with:
-          tofu wrapper: false
+          terraform wrapper: true
           
       - name: Checkout repo
         uses: actions/checkout@v4
