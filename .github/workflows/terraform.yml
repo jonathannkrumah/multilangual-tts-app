@@ -24,8 +24,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::164229328614:role/GitHubTerraformRole
           aws-region: us-east-1
 
       - name: Terraform Init (backend)
@@ -48,8 +47,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::164229328614:role/GitHubTerraformRole
           aws-region: us-east-1
 
       # Lambda Deployment
@@ -99,8 +97,7 @@ jobs:
           aws s3 sync build/ s3://tts-app-frontend --delete
         working-directory: ./frontend/tts-frontend
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::164229328614:role/GitHubTerraformRole
           AWS_DEFAULT_REGION: us-east-1
 
     
@@ -116,6 +113,5 @@ jobs:
         if: ${{ env.CF_ID != '' }}
         run: aws cloudfront create-invalidation --distribution-id $CF_ID --paths "/*"
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::164229328614:role/GitHubTerraformRole
           AWS_DEFAULT_REGION: us-east-1
