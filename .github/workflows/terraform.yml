@@ -11,8 +11,10 @@ permissions:
   contents: read
 
 jobs:
-  bootstrap:
-    name: Bootstrap Terraform Backend
+
+  # Step 1: Bootstrap backend
+
+  bootstrap-backend:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -27,18 +29,18 @@ jobs:
           role-to-assume: arn:aws:iam::164229328614:role/GitHubTerraformRole
           aws-region: us-east-1
 
-      # Terraform init WITHOUT backend
-      - name: Terraform Init (local)
-        run: terraform -chdir=infrastructure init -backend=false
+      - name: Terraform Init (bootstrap backend)
+        run: terraform -chdir=infrastructure/bootstrap-backend init
 
-      # Apply only the backend resources (S3 + DynamoDB)
-      - name: Terraform Apply Backend
-        run: terraform -chdir=infrastructure apply -auto-approve -target=aws_s3_bucket.tf_state -target=aws_dynamodb_table.tf_locks
+      - name: Terraform Apply (bootstrap backend)
+        run: terraform -chdir=infrastructure/bootstrap-backend apply -auto-approve
+
+  # Deploy main infrastructure
 
   deploy:
-    name: Deploy TTS Application
     runs-on: ubuntu-latest
-    needs: bootstrap
+    needs: [bootstrap-backend]
+    if: always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -52,29 +54,21 @@ jobs:
           role-to-assume: arn:aws:iam::164229328614:role/GitHubTerraformRole
           aws-region: us-east-1
 
-      # Initialize Terraform WITH real backend
-      - name: Terraform Init (backend)
+      - name: Terraform Init (main infrastructure with backend)
         run: terraform -chdir=infrastructure init -reconfigure
 
-      # Package Lambda
-      - name: Package Lambda
-        run: |
-          chmod +x scripts/package_lambda.sh
-          ./scripts/package_lambda.sh
-
-      # Terraform validate & plan
       - name: Terraform Validate
         run: terraform -chdir=infrastructure validate
 
       - name: Terraform Plan
-        run: terraform -chdir=infrastructure plan -input=false -out=tfplan
+        run: terraform -chdir=infrastructure plan -out=tfplan -input=false
 
-      # Terraform apply
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform -chdir=infrastructure apply -input=false -auto-approve tfplan
 
-      # Frontend: Setup Node.js
+      # Frontend deployment
+   
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -96,23 +90,19 @@ jobs:
         working-directory: ./frontend/tts-frontend
 
       - name: Sync build to S3
-        run: |
-          aws s3 sync build/ s3://tts-app-frontend --delete
+        run: aws s3 sync build/ s3://tts-app-frontend --delete
         working-directory: ./frontend/tts-frontend
         env:
           AWS_DEFAULT_REGION: us-east-1
-          AWS_ROLE_ARN: arn:aws:iam::164229328614:role/GitHubTerraformRole
 
-      # CloudFront Invalidation
       - name: Get CloudFront Distribution ID
         id: get_cf_id
         run: |
           CF_ID=$(terraform -chdir=infrastructure/app output -raw frontend_cloudfront_id || echo "")
           echo "CF_ID=$CF_ID" >> $GITHUB_ENV
 
-      - name: Invalidate CloudFront Cache
+      - name: Invalidate CloudFront cache
         if: ${{ env.CF_ID != '' }}
         run: aws cloudfront create-invalidation --distribution-id $CF_ID --paths "/*"
         env:
           AWS_DEFAULT_REGION: us-east-1
-          AWS_ROLE_ARN: arn:aws:iam::164229328614:role/GitHubTerraformRole

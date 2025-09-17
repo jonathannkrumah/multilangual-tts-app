@@ -1,22 +1,16 @@
+provider "aws" {
+  region = "us-east-1"
+}
 
 resource "aws_s3_bucket" "tf_state" {
   bucket = "tts-terraform-state-bucket124687701040"
-
-  lifecycle {
-    prevent_destroy = true
-  }
-
-  tags = {
-    Name = "Terraform State Bucket"
-  }
+  lifecycle { prevent_destroy = true }
+  tags = { Name = "Terraform State Bucket" }
 }
 
 resource "aws_s3_bucket_versioning" "tf_state_versioning" {
   bucket = aws_s3_bucket.tf_state.id
-
-  versioning_configuration {
-    status = "Enabled"
-  }
+  versioning_configuration { status = "Enabled" }
 }
 
 resource "aws_dynamodb_table" "tf_locks" {
