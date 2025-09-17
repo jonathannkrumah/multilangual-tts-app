@@ -1,6 +1,6 @@
 
 resource "aws_s3_bucket" "tf_state" {
-  bucket = "tts-terraform-state-bucket12468789797"
+  bucket = "tts-terraform-state-bucket12468770040"
 
   lifecycle {
     prevent_destroy = true
@@ -20,7 +20,7 @@ resource "aws_s3_bucket_versioning" "tf_state_versioning" {
 }
 
 resource "aws_dynamodb_table" "tf_locks" {
-  name         = "terraform-lock-table124455"
+  name         = "terraform-lock-table1244500545"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "LockID"
 
