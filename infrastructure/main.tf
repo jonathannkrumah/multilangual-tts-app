@@ -179,10 +179,6 @@ resource "aws_lambda_permission" "api_gateway_invoke" {
   source_arn    = "${aws_api_gateway_rest_api.tts_api.execution_arn}/*/*"
 }
 
-resource "aws_api_gateway_deployment" "tts_deployment" {
-  depends_on  = [aws_api_gateway_integration.tts_integration]
-  rest_api_id = aws_api_gateway_rest_api.tts_api.id
-}
 
 resource "aws_api_gateway_stage" "dev" {
   rest_api_id   = aws_api_gateway_rest_api.tts_api.id
