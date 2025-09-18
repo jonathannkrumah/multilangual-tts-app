@@ -86,3 +86,23 @@ resource "aws_iam_role_policy" "lambda_policy" {
     ]
   })
 }
+
+# Grant Lambda role permission to decrypt environment variables encrypted with KMS
+resource "aws_iam_role_policy" "lambda_kms_access" {
+  name = "lambda-kms-decrypt"
+  role = aws_iam_role.lambda_exec.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey"
+        ]
+        Resource = "arn:aws:kms:us-east-1:164229328614:key/693044c0-a953-4017-9479-61c6677decdd"
+      }
+    ]
+  })
+}
