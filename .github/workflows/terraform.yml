@@ -11,68 +11,87 @@ permissions:
   contents: read
 
 jobs:
+
   deploy:
     runs-on: ubuntu-latest
-    if: always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     steps:
+      # Step 1: Checkout repo
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # Step 2: Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      # Step 3: Configure AWS credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::164229328614:role/GitHubTerraformRole
           aws-region: us-east-1
 
-      - name: Terraform Init (main infrastructure with existing backend)
+      # Step 4: Package Lambda function
+      - name: Package Lambda
+        run: |
+          chmod +x scripts/package_lambda.sh
+          ./scripts/package_lambda.sh
+
+      # Step 5: Terraform init with backend
+      - name: Terraform Init
         run: terraform -chdir=infrastructure init -reconfigure
 
+      # Step 6: Terraform validate
       - name: Terraform Validate
         run: terraform -chdir=infrastructure validate
 
+      # Step 7: Terraform plan
       - name: Terraform Plan
         run: terraform -chdir=infrastructure plan -out=tfplan -input=false
 
+      # Step 8: Terraform apply
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform -chdir=infrastructure apply -input=false -auto-approve tfplan
 
-      # Frontend deployment
+      # Step 9: Setup Node.js for frontend
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
 
+      # Step 10: Install frontend dependencies
       - name: Install frontend dependencies
         run: npm install
         working-directory: ./frontend/tts-frontend
 
+      # Step 11: Set React environment variables
       - name: Set React environment variables
         run: |
-          API_URL=$(terraform -chdir=$GITHUB_WORKSPACE/infrastructure/app output -raw tts_api_invoke_url)
+          API_URL=$(terraform -chdir=$GITHUB_WORKSPACE/infrastructure output -raw tts_api_invoke_url)
           echo "REACT_APP_TTS_API_URL=$API_URL" >> $GITHUB_ENV
           echo "REACT_APP_TTS_API_URL=$API_URL" > .env
         working-directory: ./frontend/tts-frontend
 
+      # Step 12: Build React frontend
       - name: Build React frontend
         run: npm run build
         working-directory: ./frontend/tts-frontend
 
+      # Step 13: Sync build to S3
       - name: Sync build to S3
         run: aws s3 sync build/ s3://tts-app-frontend --delete
         working-directory: ./frontend/tts-frontend
         env:
           AWS_DEFAULT_REGION: us-east-1
 
+      # Step 14: Get CloudFront Distribution ID
       - name: Get CloudFront Distribution ID
         id: get_cf_id
         run: |
-          CF_ID=$(terraform -chdir=infrastructure/app output -raw frontend_cloudfront_id || echo "")
+          CF_ID=$(terraform -chdir=infrastructure output -raw frontend_cloudfront_id || echo "")
           echo "CF_ID=$CF_ID" >> $GITHUB_ENV
 
+      # Step 15: Invalidate CloudFront cache
       - name: Invalidate CloudFront cache
         if: ${{ env.CF_ID != '' }}
         run: aws cloudfront create-invalidation --distribution-id $CF_ID --paths "/*"

@@ -30,27 +30,23 @@ resource "aws_s3_bucket_policy" "frontend_policy" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = concat(
-      var.enable_cloudfront ? [
-        {
-          Sid       = "AllowCloudFrontServicePrincipalReadOnly"
-          Effect    = "Allow"
-          Principal = {
-            AWS = aws_cloudfront_origin_access_identity.frontend_oai[0].iam_arn
-          }
-          Action   = ["s3:GetObject"]
-          Resource = "${aws_s3_bucket.frontend.arn}/*"
+    Statement = [
+      var.enable_cloudfront ? {
+        Sid       = "AllowCloudFrontServicePrincipalReadOnly"
+        Effect    = "Allow"
+        Principal = {
+          AWS = aws_cloudfront_origin_access_identity.frontend_oai[0].iam_arn
         }
-      ] : [
-        {
-          Sid       = "AllowPublicRead"
-          Effect    = "Allow"
-          Principal = "*"
-          Action    = ["s3:GetObject"]
-          Resource  = "${aws_s3_bucket.frontend.arn}/*"
-        }
-      ]
-    )
+        Action   = ["s3:GetObject"]
+        Resource = "${aws_s3_bucket.frontend.arn}/*"
+      } : {
+        Sid       = "AllowPublicRead"
+        Effect    = "Allow"
+        Principal = { AWS = "*" }
+        Action    = ["s3:GetObject"]
+        Resource  = "${aws_s3_bucket.frontend.arn}/*"
+      }
+    ]
   })
 }
 
@@ -81,9 +77,7 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
 
     forwarded_values {
       query_string = false
-      cookies {
-        forward = "none"
-      }
+      cookies { forward = "none" }
     }
   }
 
@@ -110,7 +104,7 @@ resource "aws_s3_bucket" "audio" {
 
   tags = {
     Name        = var.s3_bucket_name
-    Environment = var.s3_bucket_name
+    Environment = var.environment
   }
 }
 
@@ -141,10 +135,13 @@ resource "aws_lambda_function" "tts_lambda" {
       PRESIGNED_EXPIRE = "3600"
     }
   }
+
+  depends_on = [aws_s3_bucket.audio]
 }
 
 
 # API Gateway
+
 resource "aws_api_gateway_rest_api" "tts_api" {
   name = "${var.project_name}-api"
 }
@@ -179,6 +176,10 @@ resource "aws_lambda_permission" "api_gateway_invoke" {
   source_arn    = "${aws_api_gateway_rest_api.tts_api.execution_arn}/*/*"
 }
 
+resource "aws_api_gateway_deployment" "tts_deployment" {
+  depends_on  = [aws_api_gateway_integration.tts_integration]
+  rest_api_id = aws_api_gateway_rest_api.tts_api.id
+}
 
 resource "aws_api_gateway_stage" "dev" {
   rest_api_id   = aws_api_gateway_rest_api.tts_api.id
