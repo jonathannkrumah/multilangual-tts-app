@@ -45,7 +45,9 @@ jobs:
         run: terraform -chdir=infrastructure validate
 
       - name: Import existing Lambda
-        run: terraform -chdir=infrastructure import aws_lambda_function.tts_lambda ttsLambda || echo "Lambda already imported"
+        run: |
+          terraform -chdir=infrastructure state rm aws_lambda_function.tts_lambda || echo "Lambda not in state"
+          terraform -chdir=infrastructure import aws_lambda_function.tts_lambda ttsLambda || echo "Lambda already imported"
 
       # Step 8: Terraform plan
       - name: Terraform Plan
