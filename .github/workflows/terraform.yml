@@ -64,41 +64,41 @@ jobs:
         with:
           node-version: 20
 
-      # Step 11: Install frontend dependencies
-      - name: Install frontend dependencies
-        run: npm install
-        working-directory: ./frontend/tts-frontend
+      # # Step 11: Install frontend dependencies
+      # - name: Install frontend dependencies
+      #   run: npm install
+      #   working-directory: ./frontend/tts-frontend
 
-      # Step 12: Set React environment variables
-      - name: Set React environment variables
-        run: |
-          API_URL=$(terraform -chdir=$GITHUB_WORKSPACE/infrastructure output -raw tts_api_invoke_url)
-          echo "REACT_APP_TTS_API_URL=$API_URL" >> $GITHUB_ENV
-          echo "REACT_APP_TTS_API_URL=$API_URL" > .env
-        working-directory: ./frontend/tts-frontend
+      # # Step 12: Set React environment variables
+      # - name: Set React environment variables
+      #   run: |
+      #     API_URL=$(terraform -chdir=$GITHUB_WORKSPACE/infrastructure output -raw tts_api_invoke_url)
+      #     echo "REACT_APP_TTS_API_URL=$API_URL" >> $GITHUB_ENV
+      #     echo "REACT_APP_TTS_API_URL=$API_URL" > .env
+      #   working-directory: ./frontend/tts-frontend
 
-      # Step 13: Build React frontend
-      - name: Build React frontend
-        run: npm run build
-        working-directory: ./frontend/tts-frontend
+      # # Step 13: Build React frontend
+      # - name: Build React frontend
+      #   run: npm run build
+      #   working-directory: ./frontend/tts-frontend
 
-      # Step 14: Sync build to S3
-      - name: Sync build to S3
-        run: aws s3 sync build/ s3://tts-app-frontend --delete
-        working-directory: ./frontend/tts-frontend
-        env:
-          AWS_DEFAULT_REGION: us-east-1
+      # # Step 14: Sync build to S3
+      # - name: Sync build to S3
+      #   run: aws s3 sync build/ s3://tts-app-frontend --delete
+      #   working-directory: ./frontend/tts-frontend
+      #   env:
+      #     AWS_DEFAULT_REGION: us-east-1
 
-      # Step 15: Get CloudFront Distribution ID
-      - name: Get CloudFront Distribution ID
-        id: get_cf_id
-        run: |
-          CF_ID=$(terraform -chdir=infrastructure output -raw frontend_cloudfront_id || echo "")
-          echo "CF_ID=$CF_ID" >> $GITHUB_ENV
+      # # Step 15: Get CloudFront Distribution ID
+      # - name: Get CloudFront Distribution ID
+      #   id: get_cf_id
+      #   run: |
+      #     CF_ID=$(terraform -chdir=infrastructure output -raw frontend_cloudfront_id || echo "")
+      #     echo "CF_ID=$CF_ID" >> $GITHUB_ENV
 
-      # Step 16: Invalidate CloudFront cache
-      - name: Invalidate CloudFront cache
-        if: ${{ env.CF_ID != '' }}
-        run: aws cloudfront create-invalidation --distribution-id $CF_ID --paths "/*"
-        env:
-          AWS_DEFAULT_REGION: us-east-1
+      # # Step 16: Invalidate CloudFront cache
+      # - name: Invalidate CloudFront cache
+      #   if: ${{ env.CF_ID != '' }}
+      #   run: aws cloudfront create-invalidation --distribution-id $CF_ID --paths "/*"
+      #   env:
+      #     AWS_DEFAULT_REGION: us-east-1
