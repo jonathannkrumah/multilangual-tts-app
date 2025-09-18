@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="/home/nkrumah/Documents/projects/AZUBI-CAPSTONE-PROJECT/multilangual-tts-app"
-INFRA_DIR="$ROOT_DIR/infrastructure"
+#INFRA_DIR="$ROOT_DIR/infrastructure"
 APP_DIR="$ROOT_DIR/frontend/tts-frontend"
 
 API_URL=$(terraform -chdir="$INFRA_DIR" output -raw tts_api_invoke_url)
