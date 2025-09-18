@@ -125,6 +125,8 @@ resource "aws_lambda_function" "tts_lambda" {
   role             = aws_iam_role.lambda_exec.arn
   handler          = "lambda_function.lambda_handler"
   runtime          = "python3.9"
+  timeout          = 10
+  kms_key_arn      = aws_kms_key.lambda_env_kms.arn
 
   environment {
     variables = {
@@ -171,7 +173,7 @@ resource "aws_api_gateway_integration" "tts_integration" {
   http_method             = aws_api_gateway_method.tts_post.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.tts_lambda.invoke_arn
+  uri                     = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.tts_lambda.arn}/invocations"
 }
 
 resource "aws_lambda_permission" "api_gateway_invoke" {

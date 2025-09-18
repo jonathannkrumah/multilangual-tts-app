@@ -1,0 +1,3 @@
+# Ignore Terraform working directory and lock file in infrastructure
+infrastructure/.terraform/
+infrastructure/.terraform.lock.hcl

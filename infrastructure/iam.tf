@@ -36,6 +36,12 @@ resource "aws_iam_role" "lambda_exec" {
   })
 }
 
+# Attach AWS managed basic execution role to the Lambda execution role (for CloudWatch Logs)
+resource "aws_iam_role_policy_attachment" "lambda_exec_basic" {
+  role       = aws_iam_role.lambda_exec.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
 # Inline IAM policy for Lambda
 resource "aws_iam_role_policy" "lambda_policy" {
   name = "tts-lambda-policy"
@@ -52,7 +58,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
       },
       # Polly
       {
-        Action   = ["polly:SynthesizeSpeech"]
+        Action   = ["polly:SynthesizeSpeech", "polly:DescribeVoices"]
         Effect   = "Allow"
         Resource = "*"
       },
@@ -67,7 +73,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
       },
       # Translate
       {
-        Action   = ["translate:TranslateText"]
+        Action   = ["translate:TranslateText", "translate:ListLanguages"]
         Effect   = "Allow"
         Resource = "*"
       },
@@ -101,9 +107,43 @@ resource "aws_iam_role_policy" "lambda_kms_access" {
           "kms:Decrypt",
           "kms:GenerateDataKey"
         ]
-        Resource = "arn:aws:kms:us-east-1:164229328614:key/693044c0-a953-4017-9479-61c6677decdd"
+        Resource = aws_kms_key.lambda_env_kms.arn
       }
     ]
   })
 }
+
+# KMS key for Lambda environment variable encryption
+resource "aws_kms_key" "lambda_env_kms" {
+  description             = "KMS key for encrypting Lambda environment variables"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement: [
+      {
+        Sid: "Enable IAM User Permissions",
+        Effect: "Allow",
+        Principal: { AWS: "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" },
+        Action: "kms:*",
+        Resource: "*"
+      },
+      {
+        Sid: "Allow Lambda to use key",
+        Effect: "Allow",
+        Principal: { AWS: aws_iam_role.lambda_exec.arn },
+        Action: [
+          "kms:Decrypt",
+          "kms:Encrypt",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ],
+        Resource: "*"
+      }
+    ]
+  })
+}
+
+data "aws_caller_identity" "current" {}
 
