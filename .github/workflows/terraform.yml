@@ -44,32 +44,33 @@ jobs:
       - name: Terraform Validate
         run: terraform -chdir=infrastructure validate
 
+      # Step 7: Import existing backend resources
       - name: Terraform Import Existing Backend Resources
         run: |
           terraform -chdir=infrastructure import -lock=false aws_s3_bucket.tf_state tts-terraform-state-bucket124687701040 || echo "Bucket already imported"
           terraform -chdir=infrastructure import -lock=false aws_dynamodb_table.tf_locks terraform-lock-table12445003545 || echo "Table already imported"
 
-      # Step 7: Terraform plan
+      # Step 8: Terraform plan
       - name: Terraform Plan
         run: terraform -chdir=infrastructure plan -out=tfplan -input=false
 
-      # Step 8: Terraform apply
+      # Step 9: Terraform apply
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform -chdir=infrastructure apply -input=false -auto-approve tfplan
 
-      # Step 9: Setup Node.js for frontend
+      # Step 10: Setup Node.js for frontend
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
 
-      # Step 10: Install frontend dependencies
+      # Step 11: Install frontend dependencies
       - name: Install frontend dependencies
         run: npm install
         working-directory: ./frontend/tts-frontend
 
-      # Step 11: Set React environment variables
+      # Step 12: Set React environment variables
       - name: Set React environment variables
         run: |
           API_URL=$(terraform -chdir=$GITHUB_WORKSPACE/infrastructure output -raw tts_api_invoke_url)
@@ -77,26 +78,26 @@ jobs:
           echo "REACT_APP_TTS_API_URL=$API_URL" > .env
         working-directory: ./frontend/tts-frontend
 
-      # Step 12: Build React frontend
+      # Step 13: Build React frontend
       - name: Build React frontend
         run: npm run build
         working-directory: ./frontend/tts-frontend
 
-      # Step 13: Sync build to S3
+      # Step 14: Sync build to S3
       - name: Sync build to S3
         run: aws s3 sync build/ s3://tts-app-frontend --delete
         working-directory: ./frontend/tts-frontend
         env:
           AWS_DEFAULT_REGION: us-east-1
 
-      # Step 14: Get CloudFront Distribution ID
+      # Step 15: Get CloudFront Distribution ID
       - name: Get CloudFront Distribution ID
         id: get_cf_id
         run: |
           CF_ID=$(terraform -chdir=infrastructure output -raw frontend_cloudfront_id || echo "")
           echo "CF_ID=$CF_ID" >> $GITHUB_ENV
 
-      # Step 15: Invalidate CloudFront cache
+      # Step 16: Invalidate CloudFront cache
       - name: Invalidate CloudFront cache
         if: ${{ env.CF_ID != '' }}
         run: aws cloudfront create-invalidation --distribution-id $CF_ID --paths "/*"
