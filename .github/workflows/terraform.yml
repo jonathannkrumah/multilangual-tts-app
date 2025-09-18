@@ -44,6 +44,11 @@ jobs:
       - name: Terraform Validate
         run: terraform -chdir=infrastructure validate
 
+      - name: Terraform Import Existing Backend Resources
+        run: |
+          terraform -chdir=infrastructure import -lock=false aws_s3_bucket.tf_state tts-terraform-state-bucket124687701040 || echo "Bucket already imported"
+          terraform -chdir=infrastructure import -lock=false aws_dynamodb_table.tf_locks terraform-lock-table12445003545 || echo "Table already imported"
+
       # Step 7: Terraform plan
       - name: Terraform Plan
         run: terraform -chdir=infrastructure plan -out=tfplan -input=false

@@ -2,10 +2,10 @@
 # S3 Frontend Bucket
 
 resource "aws_s3_bucket" "frontend" {
-  bucket = "${var.project_name}-frontend"
+  bucket = "${var.project_name}-frontend121314"
 
   tags = {
-    Name = "${var.project_name}-frontend"
+    Name = "${var.project_name}-frontend121314"
   }
 }
 
