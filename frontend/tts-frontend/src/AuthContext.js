@@ -16,7 +16,7 @@ export function AuthProvider({ children }) {
   // Check if user is already authenticated on app start
   useEffect(() => {
     checkAuthState();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const checkAuthState = () => {
     const currentUser = userPool.getCurrentUser();

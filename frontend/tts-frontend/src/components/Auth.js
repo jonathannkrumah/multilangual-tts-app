@@ -12,8 +12,8 @@ export function AuthModal({ isOpen, onClose, mode = "signin" }) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [needsConfirmation, setNeedsConfirmation] = useState(false); // eslint-disable-line no-unused-vars
   const [success, setSuccess] = useState("");
-  const [needsConfirmation, setNeedsConfirmation] = useState(false);
 
   const { signIn, signUp, confirmSignUp, forgotPassword, confirmPassword } = useAuth();
 
