@@ -58,11 +58,11 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform -chdir=infrastructure apply -input=false -auto-approve tfplan
 
-      # Step 10: Setup Node.js for frontend
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
+      # # Step 10: Setup Node.js for frontend
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: 20
 
       # # Step 11: Install frontend dependencies
       # - name: Install frontend dependencies
