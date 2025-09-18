@@ -44,9 +44,8 @@ jobs:
       - name: Terraform Validate
         run: terraform -chdir=infrastructure validate
 
-      # # # Step 7: Import existing backend resources (safe)
-      # - name: Terraform Import Existing Backend Resources
-      #   run: terraform state rm aws_lambda_function.tts_lambda
+      - name: Import existing Lambda
+        run: terraform -chdir=infrastructure import aws_lambda_function.tts_lambda ttsLambda || echo "Lambda already imported"
 
       # Step 8: Terraform plan
       - name: Terraform Plan
