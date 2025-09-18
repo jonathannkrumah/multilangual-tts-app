@@ -1,30 +1,31 @@
 
-# S3 Frontend Bucket
+# S3 Frontend Bucket (Private + CloudFront)
 
 resource "aws_s3_bucket" "frontend" {
-  bucket = "${var.project_name}-frontend121314"
+  bucket = "${var.project_name}-frontend12131884"
+  acl    = "private"
+
+  versioning {
+    enabled = true
+  }
+
+  website {
+    index_document = "index.html"
+    error_document = "index.html"
+  }
 
   tags = {
-    Name = "${var.project_name}-frontend121314"
+    Name = "${var.project_name}-frontend12131884"
   }
 }
 
-resource "aws_s3_bucket_website_configuration" "frontend_website" {
-  bucket = aws_s3_bucket.frontend.id
-
-  index_document {
-    suffix = "index.html"
-  }
-}
-
-
-# CloudFront for Frontend
-
+# CloudFront Origin Access Identity (OAI)
 resource "aws_cloudfront_origin_access_identity" "frontend_oai" {
   count   = var.enable_cloudfront ? 1 : 0
   comment = "OAI for frontend S3 bucket"
 }
 
+# S3 Bucket Policy (only allow CloudFront OAI or public if CloudFront disabled)
 resource "aws_s3_bucket_policy" "frontend_policy" {
   bucket = aws_s3_bucket.frontend.id
 
@@ -32,26 +33,27 @@ resource "aws_s3_bucket_policy" "frontend_policy" {
     Version = "2012-10-17"
     Statement = [
       var.enable_cloudfront ? {
-        Sid       = "AllowCloudFrontServicePrincipalReadOnly"
+        Sid       = "AllowCloudFrontOAIRead"
         Effect    = "Allow"
-        Principal = {
-          AWS = aws_cloudfront_origin_access_identity.frontend_oai[0].iam_arn
-        }
+        Principal = { AWS = aws_cloudfront_origin_access_identity.frontend_oai[0].iam_arn }
         Action   = ["s3:GetObject"]
         Resource = "${aws_s3_bucket.frontend.arn}/*"
       } : {
         Sid       = "AllowPublicRead"
         Effect    = "Allow"
         Principal = { AWS = "*" }
-        Action    = ["s3:GetObject"]
-        Resource  = "${aws_s3_bucket.frontend.arn}/*"
+        Action   = ["s3:GetObject"]
+        Resource = "${aws_s3_bucket.frontend.arn}/*"
       }
     ]
   })
 }
 
+# CloudFront Distribution
 resource "aws_cloudfront_distribution" "frontend_distribution" {
-  count = var.enable_cloudfront ? 1 : 0
+  count               = var.enable_cloudfront ? 1 : 0
+  enabled             = true
+  default_root_object = "index.html"
 
   origin {
     domain_name = aws_s3_bucket.frontend.bucket_regional_domain_name
@@ -61,11 +63,6 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
       origin_access_identity = aws_cloudfront_origin_access_identity.frontend_oai[0].cloudfront_access_identity_path
     }
   }
-
-  enabled             = true
-  is_ipv6_enabled     = true
-  comment             = "CloudFront distribution for TTS frontend"
-  default_root_object = "index.html"
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
@@ -81,14 +78,14 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
     }
   }
 
-  viewer_certificate {
-    cloudfront_default_certificate = true
-  }
-
   restrictions {
     geo_restriction {
       restriction_type = "none"
     }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
   }
 
   tags = {
@@ -96,8 +93,9 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
   }
 }
 
-
+########################################
 # Audio Bucket (S3)
+########################################
 
 resource "aws_s3_bucket" "audio" {
   bucket = var.s3_bucket_name
@@ -118,8 +116,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "audio_sse" {
   }
 }
 
-
-# Lambda
+# Lambda Function
 
 resource "aws_lambda_function" "tts_lambda" {
   filename         = "${path.module}/../backend/lambda.zip"
@@ -180,12 +177,9 @@ resource "aws_api_gateway_deployment" "tts_deployment" {
   rest_api_id = aws_api_gateway_rest_api.tts_api.id
 
   depends_on = [
-    aws_api_gateway_integration_response.tts_options_integration_response,
-    aws_api_gateway_integration.tts_integration, 
-    aws_s3_bucket_cors_configuration.frontend_cors
+    aws_api_gateway_integration.tts_integration
   ]
 }
-
 
 resource "aws_api_gateway_stage" "dev" {
   rest_api_id   = aws_api_gateway_rest_api.tts_api.id
