@@ -38,7 +38,7 @@ cd "$APP_DIR"
 
 # Install dependencies if missing
 if [[ ! -d node_modules ]]; then
-  npm ci --no-audit --no-fund
+  npm install --no-audit --no-fund
 fi
 
 # Build frontend with all environment variables injected
