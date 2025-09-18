@@ -25,10 +25,11 @@ output "tts_api_invoke_url" {
   value       = "https://${aws_api_gateway_rest_api.tts_api.id}.execute-api.${var.region}.amazonaws.com/${aws_api_gateway_stage.dev.stage_name}"
 }
 
+# outputs.tf
 output "frontend_url" {
-  description = "Frontend URL (CloudFront if enabled, otherwise S3 website)"
-  value = var.enable_cloudfront ? aws_cloudfront_distribution.frontend_distribution[0].domain_name : aws_s3_bucket.frontend.website_domain
+  value = var.enable_cloudfront ? aws_cloudfront_distribution.frontend_distribution[0].domain_name : aws_s3_bucket.frontend.bucket_regional_domain_name
 }
+
 
 output "frontend_cloudfront_id" {
   value = length(aws_cloudfront_distribution.frontend_distribution) > 0 ? aws_cloudfront_distribution.frontend_distribution[0].id : ""
