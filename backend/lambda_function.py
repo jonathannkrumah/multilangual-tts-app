@@ -116,80 +116,97 @@ def lambda_handler(event, context):
                 "body": json.dumps({"error": "Missing 'text' in request body"})
             }
 
-        text = body["text"]
-        target_language = body.get("target_language", "en").lower()
-        requested_voice = body.get("voice")
-
-        # --- Determine voice ---
-        engine = body.get("engine", "neural").lower()
-        output_format = body.get("format", "mp3")
-
-        if requested_voice:
-            voice = requested_voice
-        else:
-            voice = SUPPORTED_LANGUAGES.get(target_language)
-            if not voice:
-                return {
-                    "statusCode": 400,
-                    "headers": DEFAULT_HEADERS,
-                    "body": json.dumps({
-                        "error": f"Language '{target_language}' is not supported."
-                    })
-                }
-
-        # --- Translate if not English ---
-        if target_language != "en":
-            translate_resp = translate.translate_text(
-                Text=text,
-                SourceLanguageCode="auto",
+        # Route based on path/resource if provided; default to TTS
+        path = (event.get("resource") or event.get("path") or "/tts").lower()
+        if path.endswith("/translate"):
+            # Text-to-text translation
+            source_language = body.get("source_language", "auto").lower()
+            target_language = body.get("target_language", "en").lower()
+            resp = translate.translate_text(
+                Text=body["text"],
+                SourceLanguageCode=source_language,
                 TargetLanguageCode=target_language
             )
-            text = translate_resp["TranslatedText"]
+            return {
+                "statusCode": 200,
+                "headers": DEFAULT_HEADERS,
+                "body": json.dumps({
+                    "translated_text": resp.get("TranslatedText", ""),
+                    "source_language": resp.get("SourceLanguageCode", source_language),
+                    "target_language": target_language
+                })
+            }
+        else:
+            # Text-to-speech flow
+            text = body["text"]
+            target_language = body.get("target_language", "en").lower()
+            requested_voice = body.get("voice")
 
-        # Unique S3 key
-        timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
-        key = f"tts/{timestamp}_{uuid.uuid4().hex}.{output_format}"
+            engine = body.get("engine", "neural").lower()
+            output_format = body.get("format", "mp3")
 
-        # Polly synthesis
-        try:
-            polly_resp = polly.synthesize_speech(
-                Text=text,
-                OutputFormat=output_format,
-                VoiceId=voice,
-                Engine=("neural" if engine == "neural" else "standard")
+            if requested_voice:
+                voice = requested_voice
+            else:
+                voice = SUPPORTED_LANGUAGES.get(target_language)
+                if not voice:
+                    return {
+                        "statusCode": 400,
+                        "headers": DEFAULT_HEADERS,
+                        "body": json.dumps({
+                            "error": f"Language '{target_language}' is not supported."
+                        })
+                    }
+
+            if target_language != "en":
+                translate_resp = translate.translate_text(
+                    Text=text,
+                    SourceLanguageCode="auto",
+                    TargetLanguageCode=target_language
+                )
+                text = translate_resp["TranslatedText"]
+
+            timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+            key = f"tts/{timestamp}_{uuid.uuid4().hex}.{output_format}"
+
+            try:
+                polly_resp = polly.synthesize_speech(
+                    Text=text,
+                    OutputFormat=output_format,
+                    VoiceId=voice,
+                    Engine=("neural" if engine == "neural" else "standard")
+                )
+            except Exception:
+                polly_resp = polly.synthesize_speech(
+                    Text=text,
+                    OutputFormat=output_format,
+                    VoiceId=voice,
+                    Engine="standard"
+                )
+
+            audio_stream = polly_resp.get("AudioStream")
+            if audio_stream is None:
+                raise RuntimeError("No audio returned from Polly")
+
+            audio_bytes = audio_stream.read()
+            s3.put_object(
+                Bucket=OUTPUT_BUCKET,
+                Key=key,
+                Body=audio_bytes,
+                ContentType="audio/mpeg"
             )
-        except Exception:
-            # Fallback to standard engine if neural not supported for voice
-            polly_resp = polly.synthesize_speech(
-                Text=text,
-                OutputFormat=output_format,
-                VoiceId=voice,
-                Engine="standard"
+
+            url = s3.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": OUTPUT_BUCKET, "Key": key},
+                ExpiresIn=PRESIGNED_EXPIRE
             )
 
-        audio_stream = polly_resp.get("AudioStream")
-        if audio_stream is None:
-            raise RuntimeError("No audio returned from Polly")
-
-        audio_bytes = audio_stream.read()
-        s3.put_object(
-            Bucket=OUTPUT_BUCKET,
-            Key=key,
-            Body=audio_bytes,
-            ContentType="audio/mpeg"
-        )
-
-        url = s3.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": OUTPUT_BUCKET, "Key": key},
-            ExpiresIn=PRESIGNED_EXPIRE
-        )
-
-        return {
-            "statusCode": 200,
-            "headers": DEFAULT_HEADERS,
-            "body": json.dumps({"audio_key": key, "url": url, "voice": voice})
-        }
+            return {
+                "statusCode": 200,
+                "headers": DEFAULT_HEADERS,
+                "body": json.dumps({"audio_key": key, "url": url, "voice": voice})
+            }
 
     except Exception as e:
         print("Error:", str(e))

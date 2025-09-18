@@ -20,6 +20,13 @@ function App() {
   const [audioUrl, setAudioUrl] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Text-to-text translator state
+  const [srcText, setSrcText] = useState("");
+  const [srcLang, setSrcLang] = useState("auto");
+  const [dstLang, setDstLang] = useState("en");
+  const [translated, setTranslated] = useState("");
+  const [txLoading, setTxLoading] = useState(false);
+
   const handleGenerateAudio = async () => {
     if (!text) return alert("Please enter some text.");
     setLoading(true);
@@ -45,8 +52,29 @@ function App() {
     }
   };
 
+  const handleTranslateText = async () => {
+    if (!srcText) return alert("Please enter text to translate.");
+    setTxLoading(true);
+    setTranslated("");
+    try {
+      const API_URL = process.env.REACT_APP_TTS_API_URL;
+      const response = await fetch(`${API_URL}/translate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: srcText, source_language: srcLang, target_language: dstLang })
+      });
+      const data = await response.json();
+      if (data.translated_text !== undefined) setTranslated(data.translated_text);
+      else alert(data.error || "Translation failed.");
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setTxLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 space-y-8">
       <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-lg">
         <h1 className="text-3xl font-bold mb-6 text-center">Text-to-Speech App</h1>
         
@@ -90,6 +118,55 @@ function App() {
           <div className="mt-6">
             <audio controls src={audioUrl} autoPlay className="w-full" />
           </div>
+        )}
+      </div>
+
+      <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-lg">
+        <h2 className="text-2xl font-semibold mb-4 text-center">Text Translator</h2>
+
+        <textarea
+          placeholder="Enter text to translate..."
+          value={srcText}
+          onChange={e => setSrcText(e.target.value)}
+          rows={4}
+          className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4"
+        />
+
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <select
+            value={srcLang}
+            onChange={e => setSrcLang(e.target.value)}
+            className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="auto">Auto Detect</option>
+            {languages.map(lang => (
+              <option key={lang.code} value={lang.code}>{lang.name}</option>
+            ))}
+          </select>
+
+          <select
+            value={dstLang}
+            onChange={e => setDstLang(e.target.value)}
+            className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            {languages.map(lang => (
+              <option key={lang.code} value={lang.code}>{lang.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          onClick={handleTranslateText}
+          disabled={txLoading}
+          className={`w-full py-3 rounded-md text-white font-semibold transition ${
+            txLoading ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
+          }`}
+        >
+          {txLoading ? "Translating..." : "Translate Text"}
+        </button>
+
+        {translated && (
+          <div className="mt-4 p-3 border rounded bg-gray-50 whitespace-pre-wrap">{translated}</div>
         )}
       </div>
     </div>

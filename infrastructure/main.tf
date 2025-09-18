@@ -160,9 +160,22 @@ resource "aws_api_gateway_resource" "tts_resource" {
   path_part   = "tts"
 }
 
+resource "aws_api_gateway_resource" "translate_resource" {
+  rest_api_id = aws_api_gateway_rest_api.tts_api.id
+  parent_id   = aws_api_gateway_rest_api.tts_api.root_resource_id
+  path_part   = "translate"
+}
+
 resource "aws_api_gateway_method" "tts_post" {
   rest_api_id   = aws_api_gateway_rest_api.tts_api.id
   resource_id   = aws_api_gateway_resource.tts_resource.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method" "translate_post" {
+  rest_api_id   = aws_api_gateway_rest_api.tts_api.id
+  resource_id   = aws_api_gateway_resource.translate_resource.id
   http_method   = "POST"
   authorization = "NONE"
 }
@@ -171,6 +184,15 @@ resource "aws_api_gateway_integration" "tts_integration" {
   rest_api_id             = aws_api_gateway_rest_api.tts_api.id
   resource_id             = aws_api_gateway_resource.tts_resource.id
   http_method             = aws_api_gateway_method.tts_post.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.tts_lambda.arn}/invocations"
+}
+
+resource "aws_api_gateway_integration" "translate_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.tts_api.id
+  resource_id             = aws_api_gateway_resource.translate_resource.id
+  http_method             = aws_api_gateway_method.translate_post.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = "arn:aws:apigateway:${var.region}:lambda:path/2015-03-31/functions/${aws_lambda_function.tts_lambda.arn}/invocations"
@@ -186,9 +208,13 @@ resource "aws_lambda_permission" "api_gateway_invoke" {
 
 resource "aws_api_gateway_deployment" "tts_deployment" {
   rest_api_id = aws_api_gateway_rest_api.tts_api.id
+  triggers = {
+    redeployment = timestamp()
+  }
 
   depends_on = [
-    aws_api_gateway_integration.tts_integration
+    aws_api_gateway_integration.tts_integration,
+    aws_api_gateway_integration.translate_integration
   ]
 }
 
