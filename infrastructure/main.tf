@@ -142,6 +142,7 @@ resource "aws_lambda_function" "tts_lambda" {
       filename,
     ]
   }
+   kms_key_arn = aws_kms_key.tts_lambda_key.arn
 }
 
 
