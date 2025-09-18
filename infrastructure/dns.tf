@@ -114,3 +114,11 @@ resource "aws_route53_record" "sub_alias" {
     evaluate_target_health = false
   }
 }
+
+
+resource "aws_apigatewayv2_api_mapping" "app_mapping" {
+  api_id      = aws_apigatewayv2_api.http_api.id
+  domain_name = aws_apigatewayv2_domain_name.sub.domain_name
+  stage       = aws_apigatewayv2_stage.default.id
+}
+
