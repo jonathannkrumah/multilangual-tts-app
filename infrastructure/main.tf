@@ -134,7 +134,16 @@ resource "aws_lambda_function" "tts_lambda" {
   }
 
   depends_on = [aws_s3_bucket.audio]
+
+  lifecycle {
+    ignore_changes = [
+      # Ignore metadata changes that cause identity mismatch
+      source_code_hash,
+      filename,
+    ]
+  }
 }
+
 
 
 # API Gateway
