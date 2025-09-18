@@ -59,15 +59,3 @@ resource "aws_api_gateway_integration_response" "tts_options_integration_respons
   }
 }
 
-# API Gateway Deployment (force redeploy on CORS/S3 CORS change)
-
-resource "aws_api_gateway_deployment" "tts_deployment" {
-  rest_api_id = aws_api_gateway_rest_api.tts_api.id
-
-  depends_on = [
-    aws_api_gateway_integration_response.tts_options_integration_response,
-    aws_api_gateway_integration.tts_integration, 
-    aws_s3_bucket_cors_configuration.frontend_cors
-  ]
-}
-

@@ -177,9 +177,15 @@ resource "aws_lambda_permission" "api_gateway_invoke" {
 }
 
 resource "aws_api_gateway_deployment" "tts_deployment" {
-  depends_on  = [aws_api_gateway_integration.tts_integration]
   rest_api_id = aws_api_gateway_rest_api.tts_api.id
+
+  depends_on = [
+    aws_api_gateway_integration_response.tts_options_integration_response,
+    aws_api_gateway_integration.tts_integration, 
+    aws_s3_bucket_cors_configuration.frontend_cors
+  ]
 }
+
 
 resource "aws_api_gateway_stage" "dev" {
   rest_api_id   = aws_api_gateway_rest_api.tts_api.id
