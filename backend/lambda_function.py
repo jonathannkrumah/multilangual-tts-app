@@ -7,7 +7,6 @@ from datetime import datetime
 polly = boto3.client("polly")
 translate = boto3.client("translate")
 s3 = boto3.client("s3")
-cloudwatch = boto3.client("cloudwatch")
 
 OUTPUT_BUCKET = os.environ.get("OUTPUT_BUCKET")
 PRESIGNED_EXPIRE = int(os.environ.get("PRESIGNED_EXPIRE", "3600"))
@@ -27,24 +26,6 @@ SUPPORTED_LANGUAGES = {
     "nl": "Lotte"
 }
 
-def publish_metric(name: str, value: float, unit: str = "Count", dimensions=None):
-    """Helper to push custom CloudWatch metrics."""
-    try:
-        metric_data = {
-            "MetricName": name,
-            "Unit": unit,
-            "Value": value,
-        }
-        if dimensions:
-            metric_data["Dimensions"] = dimensions
-
-        cloudwatch.put_metric_data(
-            Namespace="TTSApp",
-            MetricData=[metric_data]
-        )
-    except Exception as e:
-        print(f"Failed to publish metric {name}: {e}")
-
 def lambda_handler(event, context):
     try:
         body = event.get("body")
@@ -52,7 +33,6 @@ def lambda_handler(event, context):
             body = json.loads(body)
 
         if not body or "text" not in body:
-            publish_metric("Failures", 1)
             return {
                 "statusCode": 400,
                 "headers": {"Content-Type": "application/json"},
@@ -62,12 +42,8 @@ def lambda_handler(event, context):
         text = body["text"]
         target_language = body.get("target_language", "en").lower()
 
-        # Count every request
-        publish_metric("Requests", 1, dimensions=[{"Name": "Language", "Value": target_language}])
-
         # --- Check if language is supported ---
         if target_language not in SUPPORTED_LANGUAGES:
-            publish_metric("Failures", 1)
             return {
                 "statusCode": 400,
                 "headers": {"Content-Type": "application/json"},
@@ -119,9 +95,6 @@ def lambda_handler(event, context):
             ExpiresIn=PRESIGNED_EXPIRE
         )
 
-        # Successful processing
-        publish_metric("Successes", 1, dimensions=[{"Name": "Language", "Value": target_language}])
-
         return {
             "statusCode": 200,
             "headers": {"Content-Type": "application/json"},
@@ -130,7 +103,6 @@ def lambda_handler(event, context):
 
     except Exception as e:
         print("Error:", str(e))
-        publish_metric("Failures", 1)
         return {
             "statusCode": 500,
             "headers": {"Content-Type": "application/json"},
