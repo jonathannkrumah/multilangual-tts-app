@@ -23,3 +23,27 @@ output "frontend_cloudfront_id" {
   description = "CloudFront Distribution ID for frontend"
   value       = var.enable_cloudfront ? aws_cloudfront_distribution.frontend_distribution[0].id : ""
 }
+
+# Cognito User Pool ID
+output "cognito_user_pool_id" {
+  description = "ID of the Cognito User Pool"
+  value       = aws_cognito_user_pool.main.id
+}
+
+# Cognito App Client ID
+output "cognito_app_client_id" {
+  description = "ID of the Cognito App Client"
+  value       = aws_cognito_user_pool_client.main.id
+}
+
+# Cognito User Pool Domain
+output "cognito_domain" {
+  description = "Cognito User Pool Domain"
+  value       = aws_cognito_user_pool_domain.main.domain
+}
+
+# Cognito Identity Pool ID
+output "cognito_identity_pool_id" {
+  description = "ID of the Cognito Identity Pool"
+  value       = aws_cognito_identity_pool.main.id
+}

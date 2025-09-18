@@ -93,9 +93,7 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
   }
 }
 
-########################################
 # Audio Bucket (S3)
-########################################
 
 resource "aws_s3_bucket" "audio" {
   bucket = var.s3_bucket_name
@@ -154,6 +152,16 @@ resource "aws_api_gateway_rest_api" "tts_api" {
   name = "${var.project_name}-api"
 }
 
+# Cognito Authorizer for API Gateway
+resource "aws_api_gateway_authorizer" "cognito" {
+  name                   = "${var.project_name}-cognito-authorizer"
+  rest_api_id            = aws_api_gateway_rest_api.tts_api.id
+  type                   = "COGNITO_USER_POOLS"
+  provider_arns          = [aws_cognito_user_pool.main.arn]
+  identity_source        = "method.request.header.Authorization"
+  authorizer_credentials = null
+}
+
 resource "aws_api_gateway_resource" "tts_resource" {
   rest_api_id = aws_api_gateway_rest_api.tts_api.id
   parent_id   = aws_api_gateway_rest_api.tts_api.root_resource_id
@@ -170,14 +178,16 @@ resource "aws_api_gateway_method" "tts_post" {
   rest_api_id   = aws_api_gateway_rest_api.tts_api.id
   resource_id   = aws_api_gateway_resource.tts_resource.id
   http_method   = "POST"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.cognito.id
 }
 
 resource "aws_api_gateway_method" "translate_post" {
   rest_api_id   = aws_api_gateway_rest_api.tts_api.id
   resource_id   = aws_api_gateway_resource.translate_resource.id
   http_method   = "POST"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.cognito.id
 }
 
 resource "aws_api_gateway_integration" "tts_integration" {

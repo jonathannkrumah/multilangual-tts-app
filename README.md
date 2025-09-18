@@ -24,42 +24,53 @@ A cutting-edge multilingual text-to-speech and translation application powered b
 - **High Accuracy**: Powered by Amazon Translate for contextual understanding
 - **Bidirectional**: Translate from any supported language to any other
 
+### 🔐 Authentication & Security
+- **User Registration**: Secure sign-up with email verification
+- **User Authentication**: JWT-based authentication with AWS Cognito
+- **Password Security**: Strong password policies and secure reset functionality
+- **Session Management**: Automatic token refresh and persistent sessions
+- **API Protection**: All endpoints secured with Cognito authorization
+- **Advanced Security**: AWS Cognito Advanced Security Mode enabled
+
 ### 🎨 Modern UI/UX
 - **Responsive Design**: Mobile-first design that works on all devices
 - **Professional Interface**: Clean, intuitive user experience
 - **Real-time Feedback**: Loading states and progress indicators
 - **Accessibility**: WCAG compliant design patterns
+- **Authentication Flow**: Seamless sign-up/sign-in experience
 
 ## 🏗️ Architecture
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   React App     │    │   API Gateway    │    │   AWS Lambda    │
-│   (Frontend)    │◄──►│   (REST API)     │◄──►│   (Backend)     │
+│   (Frontend)    │◄──►│  (REST API +     │◄──►│   (Backend)     │
+│   + Cognito SDK │    │   Cognito Auth)  │    │                 │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
          │                        │                        │
-         │                        │                        ▼
-         │                        │              ┌─────────────────┐
-         │                        │              │  Amazon Polly   │
-         │                        │              │ (Text-to-Speech)│
-         │                        │              └─────────────────┘
-         │                        │                        │
-         │                        │                        ▼
-         │                        │              ┌─────────────────┐
-         │                        │              │ Amazon Translate│
-         │                        │              │  (Translation)  │
-         │                        │              └─────────────────┘
-         ▼                        │                        │
-┌─────────────────┐              │                        ▼
-│   Amazon S3     │              │              ┌─────────────────┐
-│ (Static Hosting)│              │              │   Amazon S3     │
-└─────────────────┘              │              │ (Audio Storage) │
-                                  │              └─────────────────┘
-                                  ▼
-                        ┌─────────────────┐
-                        │  CloudWatch     │
-                        │  (Monitoring)   │
-                        └─────────────────┘
+         │              ┌──────────────────┐               │
+         └─────────────►│  Cognito User    │               │
+                        │     Pool         │               │
+                        │ (Authentication) │               │
+                        └──────────────────┘               │
+                                 │                         │
+                                 ▼                         ▼
+                        ┌──────────────────┐     ┌─────────────────┐
+                        │   JWT Tokens     │     │  Amazon Polly   │
+                        │   (Security)     │     │ (Text-to-Speech)│
+                        └──────────────────┘     └─────────────────┘
+                                                          │
+                                                          ▼
+                                                ┌─────────────────┐
+                                                │ Amazon Translate│
+                                                │  (Translation)  │
+                                                └─────────────────┘
+         ┌─────────────────┐    ┌──────────────────┐     │
+         │   Amazon S3     │    │  CloudWatch      │     ▼
+         │ (Static Hosting)│    │  (Monitoring)    │ ┌─────────────────┐
+         └─────────────────┘    └──────────────────┘ │   Amazon S3     │
+                                                     │ (Audio Storage) │
+                                                     └─────────────────┘
 ```
 
 ## 🚀 Quick Start
@@ -111,11 +122,18 @@ A cutting-edge multilingual text-to-speech and translation application powered b
 - **React 19**: Modern UI library with hooks and functional components
 - **Tailwind CSS**: Utility-first CSS framework for responsive design
 - **JavaScript ES6+**: Modern JavaScript features and syntax
+- **Amazon Cognito SDK**: JavaScript authentication library
 
 ### Backend
 - **AWS Lambda**: Serverless compute for scalable backend logic
 - **Python 3.9**: Runtime environment with boto3 AWS SDK
-- **API Gateway**: RESTful API management and routing
+- **API Gateway**: RESTful API management with Cognito authorization
+
+### Authentication
+- **Amazon Cognito**: User pool for authentication and authorization
+- **JWT Tokens**: Secure token-based authentication
+- **Email Verification**: Automated user verification system
+- **Password Security**: Strong password policies and reset functionality
 
 ### AI Services
 - **Amazon Polly**: Neural text-to-speech synthesis
@@ -126,6 +144,7 @@ A cutting-edge multilingual text-to-speech and translation application powered b
 - **AWS S3**: Static website hosting and audio file storage
 - **AWS CloudWatch**: Monitoring and logging
 - **AWS IAM**: Identity and access management
+- **AWS KMS**: Key Management Service for environment encryption
 
 ### DevOps & CI/CD
 - **GitHub Actions**: Automated CI/CD pipeline for continuous deployment
@@ -210,10 +229,19 @@ enable_cloudfront = false
 
 ## 🚀 API Endpoints
 
+> **🔐 Authentication Required**: All API endpoints require a valid JWT token from Cognito authentication.
+
+### Authentication
+All API requests must include an Authorization header with a valid JWT token:
+```http
+Authorization: Bearer <jwt_token>
+```
+
 ### Text-to-Speech
 ```http
 POST /tts
 Content-Type: application/json
+Authorization: Bearer <jwt_token>
 
 {
   "text": "Hello, world!",
@@ -237,6 +265,7 @@ Content-Type: application/json
 ```http
 POST /translate
 Content-Type: application/json
+Authorization: Bearer <jwt_token>
 
 {
   "text": "Hello, world!",
@@ -296,14 +325,19 @@ aws lambda invoke \
 
 ### API Testing
 ```bash
-# Test text-to-speech endpoint
+# Note: All endpoints require authentication
+# First, obtain a JWT token by signing in through the web interface
+
+# Test text-to-speech endpoint (requires authentication)
 curl -X POST https://your-api-url/dev/tts \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{"text":"Hello world","target_language":"en"}'
 
-# Test translation endpoint
+# Test translation endpoint (requires authentication)
 curl -X POST https://your-api-url/dev/translate \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{"text":"Hello","source_language":"en","target_language":"fr"}'
 ```
 
@@ -337,6 +371,14 @@ AWS_ACCESS_KEY_ID          # AWS access key for deployment
 AWS_SECRET_ACCESS_KEY      # AWS secret key for deployment  
 AWS_DEFAULT_REGION         # AWS region (e.g., us-east-1)
 REACT_APP_TTS_API_URL     # API Gateway URL for frontend
+```
+
+#### Environment Variables (Auto-configured)
+The following environment variables are automatically set during deployment:
+```bash
+REACT_APP_COGNITO_USER_POOL_ID     # Cognito User Pool ID
+REACT_APP_COGNITO_APP_CLIENT_ID    # Cognito App Client ID  
+REACT_APP_COGNITO_REGION           # AWS region for Cognito
 ```
 
 ### Manual Deployment
