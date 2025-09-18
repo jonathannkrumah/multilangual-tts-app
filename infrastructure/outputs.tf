@@ -1,40 +1,25 @@
-output "frontend_bucket_url" {
-  value = aws_s3_bucket_website_configuration.frontend_website.website_endpoint
-}
+# Outputs for TTS App
 
-
-output "api_gateway_url" {
-  value = "https://${aws_api_gateway_rest_api.tts_api.id}.execute-api.${var.region}.amazonaws.com/${var.environment}/tts"
-}
-
-output "api_url" {
-  value = "https://${aws_api_gateway_rest_api.tts_api.id}.execute-api.${var.region}.amazonaws.com/${aws_api_gateway_stage.dev.stage_name}"
-}
-
-output "tts_audio_bucket_name" {
-  value = aws_s3_bucket.audio.bucket
-}
-
-output "frontend_cloudfront_domain" {
-  value = var.enable_cloudfront ? aws_cloudfront_distribution.frontend_distribution[0].domain_name : ""
-}
-
-
-output "tts_api_invoke_url" {
-  description = "API Gateway invoke URL for TTS Lambda"
-  value       = "https://${aws_api_gateway_rest_api.tts_api.id}.execute-api.${var.region}.amazonaws.com/${aws_api_gateway_stage.dev.stage_name}"
-}
-
-# outputs.tf
+# Frontend URL (CloudFront if enabled, else S3 regional domain)
 output "frontend_url" {
-  value = var.enable_cloudfront ? aws_cloudfront_distribution.frontend_distribution[0].domain_name : aws_s3_bucket.frontend.bucket_regional_domain_name
+  description = "URL of the frontend application"
+  value       = var.enable_cloudfront ? aws_cloudfront_distribution.frontend_distribution[0].domain_name : aws_s3_bucket.frontend.bucket_regional_domain_name
 }
 
+# API Gateway invoke URL
+output "tts_api_invoke_url" {
+  description = "Invoke URL of the TTS API"
+  value       = aws_api_gateway_stage.dev.invoke_url
+}
 
+# Audio S3 Bucket
+output "audio_bucket_name" {
+  description = "Name of the S3 bucket storing audio files"
+  value       = aws_s3_bucket.audio.bucket
+}
+
+# CloudFront Distribution ID (if needed for invalidation)
 output "frontend_cloudfront_id" {
-  value = length(aws_cloudfront_distribution.frontend_distribution) > 0 ? aws_cloudfront_distribution.frontend_distribution[0].id : ""
-  description = "CloudFront distribution ID (empty if not created)"
+  description = "CloudFront Distribution ID for frontend"
+  value       = var.enable_cloudfront ? aws_cloudfront_distribution.frontend_distribution[0].id : ""
 }
-
-
-
