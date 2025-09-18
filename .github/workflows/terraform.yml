@@ -35,6 +35,9 @@ jobs:
         run: |
           chmod +x scripts/package_lambda.sh
           ./scripts/package_lambda.sh
+      
+      - name: Terraform Init
+        run: terraform -chdir=infrastructure init -input=false
 
       # Step 5: Run frontend deploy script (React → S3)
       - name: Deploy Frontend
