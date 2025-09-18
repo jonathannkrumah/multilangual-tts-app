@@ -16,25 +16,8 @@ jobs:
 
   bootstrap-backend:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::164229328614:role/GitHubTerraformRole
-          aws-region: us-east-1
-
-      - name: Terraform Init (bootstrap backend)
-        run: terraform -chdir=infrastructure/bootstrap-backend init
-
-      - name: Terraform Apply (bootstrap backend)
-        run: terraform -chdir=infrastructure/bootstrap-backend apply -auto-approve
-
+     
   # Deploy main infrastructure
 
   deploy:
