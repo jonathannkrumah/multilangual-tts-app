@@ -19,9 +19,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install Terraform
-        uses: hashicorp/setup-terraform@v2
-
       # Step 2: Configure AWS credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -29,13 +26,17 @@ jobs:
           role-to-assume: arn:aws:iam::164229328614:role/GitHubTerraformRole
           aws-region: us-east-1
 
-      # Step 3: Run backend deploy script (Lambda)
+       # Step 3: Setup Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      # Step 4: Run backend deploy script (Lambda)
       - name: Deploy Lambda
         run: |
           chmod +x scripts/package_lambda.sh
           ./scripts/package_lambda.sh
 
-      # Step 4: Run frontend deploy script (React → S3)
+      # Step 5: Run frontend deploy script (React → S3)
       - name: Deploy Frontend
         run: |
           chmod +x scripts/deploy_frontend.sh
