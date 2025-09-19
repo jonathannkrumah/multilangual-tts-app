@@ -240,7 +240,7 @@ function App() {
                 </svg>
               </div>
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Jonatech Multi-Langual App</h1>
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Jonatech Multilingual App</h1>
                 <p className="text-sm text-gray-600">Break language barriers with AI-powered translation</p>
               </div>
             </div>
@@ -477,7 +477,7 @@ function App() {
               <span className="text-xl font-bold">Jonatech</span>
             </div>
             <div className="text-center md:text-right">
-              <p className="text-gray-400">© 2023 Jonatech Multi-Langual App</p>
+              <p className="text-gray-400">© 2023 Jonatech Multilingual App</p>
               <p className="text-gray-500 mt-1">All rights reserved for Jonatech Consult</p>
             </div>
           </div>
