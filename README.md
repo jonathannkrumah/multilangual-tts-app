@@ -43,80 +43,9 @@ A cutting-edge multilingual text-to-speech and translation application powered b
 
 ## 🏗️ Architecture
 
----
-config:
-  layout: dagre
----
-flowchart TD
- subgraph ExternalLayer["External Layer"]
-        Namecheap["Namecheap Domain Registration"]
-        EndUsers["End Users with Global Access"]
-  end
- subgraph DNSCDNLayer["DNS & CDN Layer"]
-        Route53["Route 53 DNS Management"]
-        CloudFront["CloudFront Global CDN<br>with Edge Locations"]
-        ACM["ACM SSL/TLS Certificates"]
-  end
- subgraph FrontendLayer["Frontend Layer"]
-        ReactApp["React Application<br>with PWA Capabilities"]
-        S3Frontend["S3 Static Website Hosting"]
-  end
- subgraph AuthLayer["Authentication Layer"]
-        CognitoUP["Cognito User Pool<br>User Management"]
-        CognitoIP["Cognito Identity Pool<br>AWS Credentials"]
-        CognitoDomain["Cognito Domain<br>Hosted UI"]
-  end
- subgraph APILayer["API Layer"]
-        APIGateway["API Gateway<br>RESTful Endpoints"]
-        CognitoAuthorizer["Cognito Authorizer<br>JWT Validation"]
-        CORSConfig["CORS Configuration"]
-  end
- subgraph BackendLayer["Backend Layer"]
-        Lambda["AWS Lambda<br>Serverless Processing"]
-  end
- subgraph AIServicesLayer["AI Services Layer"]
-        Polly["Amazon Polly<br>Text-to-Speech"]
-        Translate["Amazon Translate<br>Language Translation"]
-        Comprehend["Amazon Comprehend<br>Language Detection"]
-  end
- subgraph StorageLayer["Storage Layer"]
-        S3Audio["S3 Audio Bucket<br>Generated Files"]
-        S3Terraform["S3 Terraform State<br>Infrastructure"]
-        DynamoDB["DynamoDB<br>State Locking"]
-  end
- subgraph SecurityLayer["Security & Monitoring Layer"]
-        IAM["IAM Role-Based Access Control"]
-        KMS["KMS Encryption Key Management"]
-        CloudWatch["CloudWatch Logging & Metrics"]
-        Dashboard["Dashboard Real-time Monitoring"]
-  end
- subgraph DevOpsLayer["DevOps Layer"]
-        Terraform["Terraform Infrastructure as Code"]
-        GitHub["GitHub Source Control"]
-        GitHubActions["GitHub Actions CI/CD Pipeline"]
-  end
-    Namecheap --> Route53
-    EndUsers --> CloudFront
-    Route53 --> CloudFront
-    ACM --> CloudFront
-    CloudFront --> S3Frontend
-    ReactApp --> CognitoDomain
-    S3Frontend --> ReactApp
-    CognitoUP --> CognitoAuthorizer
-    CognitoIP --> ReactApp
-    CognitoDomain --> CognitoUP
-    APIGateway --> Lambda
-    CognitoAuthorizer --> APIGateway
-    CORSConfig --> APIGateway
-    Lambda --> Polly & Translate & Comprehend & S3Audio
-    Polly --> S3Audio
-    Terraform --> S3Terraform & DynamoDB
-    GitHub --> GitHubActions
-    GitHubActions --> Terraform
-    IAM --> Lambda & APIGateway & CognitoUP
-    KMS --> S3Audio & DynamoDB
-    CloudWatch --> Lambda & APIGateway & Dashboard
-
+<p align="center">
+  <img src="assets/architectD.png" alt="App Screenshot" width="600"/>
+</p>
 
 ## 🚀 Quick Start
 
