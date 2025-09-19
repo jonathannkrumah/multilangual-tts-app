@@ -60,7 +60,7 @@ A cutting-edge multilingual text-to-speech and translation application powered b
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/jonatech/multilingual-tts-app.git
+   git clone https://github.com/jonathannkrumah/multilangual-tts-app
    cd multilingual-tts-app
    ```
 
@@ -112,6 +112,7 @@ A cutting-edge multilingual text-to-speech and translation application powered b
 ### AI Services
 - **Amazon Polly**: Neural text-to-speech synthesis
 - **Amazon Translate**: Machine learning translation service
+- **Amazon Comprehend**: language detection
 
 ### Infrastructure
 - **Terraform**: Infrastructure as Code (IaC)
@@ -333,10 +334,10 @@ The project includes automated CI/CD pipeline using GitHub Actions that automati
   - Updates static website hosting automatically
 
 #### Workflow Benefits
-- ✅ **Zero Downtime**: Seamless deployments without service interruption
-- ✅ **Automatic Testing**: Runs tests before deployment
-- ✅ **Rollback Capability**: Easy reversion to previous versions
-- ✅ **Environment Consistency**: Same deployment process across environments
+- **Zero Downtime**: Seamless deployments without service interruption
+- **Automatic Testing**: Runs tests before deployment
+- **Rollback Capability**: Easy reversion to previous versions
+- **Environment Consistency**: Same deployment process across environments
 
 #### GitHub Secrets Required
 Configure these secrets in your GitHub repository settings:
@@ -383,24 +384,11 @@ aws lambda update-function-code --function-name ttsLambda --zip-file fileb://bac
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📋 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 👥 Authors
 
-- **Jonatech Consult** - *Initial work* - [Jonatech](https://github.com/jonatech)
+- **Jonathan Nkrumah** - *Initial work* - [Jonathan Nkrumah](https://github.com/jonathannkrumah/multilangual-tts-app)
 
-## 🙏 Acknowledgments
-
-- AWS for providing robust AI services
-- React team for the excellent frontend framework
-- Terraform for infrastructure automation
-- The open-source community for continuous inspiration
-
-## 📞 Support
-
-For support, email [support@jonatech.com](mailto:support@jonatech.com) or join our [Discord community](https://discord.gg/jonatech).
 
 ## 🗺️ Roadmap
 
@@ -415,7 +403,7 @@ For support, email [support@jonatech.com](mailto:support@jonatech.com) or join o
 ---
 
 <div align="center">
-  <strong>Built with ❤️ by Jonatech Consult</strong>
+  <strong>Built with ❤️ by Jonathan Nkrumah</strong>
   <br>
   <sub>Empowering global communication through AI</sub>
 </div>
