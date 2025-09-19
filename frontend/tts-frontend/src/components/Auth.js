@@ -13,7 +13,6 @@ export function AuthModal({ isOpen, onClose, mode = "signin" }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [needsConfirmation, setNeedsConfirmation] = useState(false);
 
   const { signIn, signUp, confirmSignUp, forgotPassword, confirmPassword } = useAuth();
 
@@ -57,7 +56,6 @@ export function AuthModal({ isOpen, onClose, mode = "signin" }) {
     try {
       await signUp(formData.email, formData.password, formData.name);
       setSuccess("Account created! Please check your email for verification code.");
-      setNeedsConfirmation(true);
       setCurrentMode("confirm");
     } catch (err) {
       setError(err.message || "Failed to create account");
@@ -76,7 +74,6 @@ export function AuthModal({ isOpen, onClose, mode = "signin" }) {
       setSuccess("Email verified! You can now sign in.");
       setTimeout(() => {
         setCurrentMode("signin");
-        setNeedsConfirmation(false);
       }, 2000);
     } catch (err) {
       setError(err.message || "Failed to verify email");
@@ -129,7 +126,6 @@ export function AuthModal({ isOpen, onClose, mode = "signin" }) {
     });
     setError("");
     setSuccess("");
-    setNeedsConfirmation(false);
   };
 
   if (!isOpen) return null;
