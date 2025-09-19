@@ -7,6 +7,9 @@
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-green)](https://github.com/features/actions)
 [![Deploy Status](https://github.com/jonatech/multilingual-tts-app/workflows/Deploy/badge.svg)](https://github.com/jonatech/multilingual-tts-app/actions)
 
+https://github.com/user-attachments/assets/4dd459e6-e2e0-4964-bf5b-a1b566be4c92
+
+
 ## Overview
 
 A cutting-edge multilingual text-to-speech and translation application powered by AWS AI services. Users can convert text into natural-sounding speech and translate text across 11 languages, breaking language barriers effortlessly. Built with a serverless, scalable architecture, this application combines translation and TTS for a seamless multilingual experience.
