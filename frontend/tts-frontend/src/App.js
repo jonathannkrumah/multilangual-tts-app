@@ -123,7 +123,7 @@ function App() {
                   </svg>
                 </div>
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Jonatech Multi-Langual App</h1>
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Jonatech Multilingual App</h1>
                   <p className="text-sm text-gray-600">Break language barriers with AI-powered translation</p>
                 </div>
               </div>
