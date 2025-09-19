@@ -44,7 +44,7 @@ A cutting-edge multilingual text-to-speech and translation application powered b
 ## 🏗️ Architecture
 
 <p align="center">
-  <img src="assets/architectD.png" alt="App Screenshot" width="600"/>
+  <img src="assets/architectD.png" alt="App Screenshot" width="700"/>
 </p>
 
 ## 🚀 Quick Start
