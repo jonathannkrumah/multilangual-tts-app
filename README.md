@@ -1,4 +1,4 @@
-# Jonatech Multi-Langual App
+# Multilingual Text-to-Speech (TTS) Application
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![AWS](https://img.shields.io/badge/AWS-Cloud-orange)](https://aws.amazon.com/)
@@ -7,7 +7,9 @@
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-green)](https://github.com/features/actions)
 [![Deploy Status](https://github.com/jonatech/multilingual-tts-app/workflows/Deploy/badge.svg)](https://github.com/jonatech/multilingual-tts-app/actions)
 
-A cutting-edge multilingual text-to-speech and translation application powered by AWS AI services. Break language barriers with AI-powered translation and natural speech synthesis across multiple languages.
+## Overview
+
+A cutting-edge multilingual text-to-speech and translation application powered by AWS AI services. Users can convert text into natural-sounding speech and translate text across 11 languages, breaking language barriers effortlessly. Built with a serverless, scalable architecture, this application combines translation and TTS for a seamless multilingual experience.
 
 ## 🌟 Features
 
@@ -41,37 +43,7 @@ A cutting-edge multilingual text-to-speech and translation application powered b
 
 ## 🏗️ Architecture
 
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   React App     │    │   API Gateway    │    │   AWS Lambda    │
-│   (Frontend)    │◄──►│  (REST API +     │◄──►│   (Backend)     │
-│   + Cognito SDK │    │   Cognito Auth)  │    │                 │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-         │                        │                        │
-         │              ┌──────────────────┐               │
-         └─────────────►│  Cognito User    │               │
-                        │     Pool         │               │
-                        │ (Authentication) │               │
-                        └──────────────────┘               │
-                                 │                         │
-                                 ▼                         ▼
-                        ┌──────────────────┐     ┌─────────────────┐
-                        │   JWT Tokens     │     │  Amazon Polly   │
-                        │   (Security)     │     │ (Text-to-Speech)│
-                        └──────────────────┘     └─────────────────┘
-                                                          │
-                                                          ▼
-                                                ┌─────────────────┐
-                                                │ Amazon Translate│
-                                                │  (Translation)  │
-                                                └─────────────────┘
-         ┌─────────────────┐    ┌──────────────────┐     │
-         │   Amazon S3     │    │  CloudWatch      │     ▼
-         │ (Static Hosting)│    │  (Monitoring)    │ ┌─────────────────┐
-         └─────────────────┘    └──────────────────┘ │   Amazon S3     │
-                                                     │ (Audio Storage) │
-                                                     └─────────────────┘
-```
+
 
 ## 🚀 Quick Start
 
